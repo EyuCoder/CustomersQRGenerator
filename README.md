@@ -21,13 +21,13 @@ Generate Badge for a single Customers:
 ```
 ./QRGenerator.py --single
 ```
-#Customers Contract Number: `0000233`
+# Customers Contract Number: `0000233`
 
 Generate Badge starting from last Generator Customers Batch: 
 ```
 ./QRGenerator.py --from
 ```
-#last Generated Contract Number: `0034755`
+# last Generated Contract Number: `0034755`
 If you add the `--printer` switch, the label will automatically get printed
 after creating. We asume that the printer is called *Brother_QL-500*.
 
