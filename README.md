@@ -1,4 +1,4 @@
-# qrcode-badgeGenerator
+# Customers QRCode Generator
 
 Label Size: A4
 
@@ -30,4 +30,4 @@ QRGenerator.py --from
 last Generated Contract Number: `0034755`
 ```
 
-for more you can you `--help`
+for more you can use `--help`
