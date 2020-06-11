@@ -19,18 +19,19 @@ SQL_SINGLE = '''
         FROM [Main_2006].[dbo].[TransactionItems] where code=subscription.itemCode),subscription.modelNo, subscription.contractNo
         FROM subscriber INNER JOIN subscription ON subscriber.id=subscription.subscriberID  
         where Subscription.ticksTo=-1 and  subscription.contractNo='''
-SQL_FROM = ''' '''
+SQL_FROM = '''
+        SELECT top(15) subscriber.name, subscriber.customerCode, subscription.serialNo, (SELECT [name]
+        FROM [Main_2006].[dbo].[TransactionItems] where code=subscription.itemCode), subscription.modelNo, subscription.contractNo
+        FROM subscriber INNER JOIN subscription ON subscriber.id=subscription.subscriberID  
+        where Subscription.ticksTo=-1 and subscription.contractNo>'''
+SQL_ORDER = 'order by subscription.contractNo'
 
 conn = pyodbc.connect(
     "Driver=SQL Server Native Client 11.0;"
-    "Server=KINGSCXR\\SQLSERVER;"
+    "Server=SERVER_NAME_HERE;"
     "Database=Subscriber;"
     "Trusted_Connection=Yes;"
 )
-
-@click.command()
-@click.option('--all', '-a', help="Define the filename of the template to use")
-@click.option('--single', '-s', help="Write the owner onto the label")
 
 documentTitle = 'WSIS Water Meter QRCode!'
 
@@ -47,7 +48,7 @@ def generate_qrcode(contract_no):
 
 
 def generate_pdf(customerName, customerCode, connectionNo, meterInfo, contract_no):
-    file_name = os.path.join(qr_dir, f'qrcode-{contract_no}.png')
+    file_name = generate_qrcode(contract_no)
     pdf_name = f"{pdf_dir}\\qrcode-{contract_no}.pdf"
     
     pdf = canvas.Canvas(pdf_name)
@@ -73,15 +74,11 @@ def generate_pdf(customerName, customerCode, connectionNo, meterInfo, contract_n
     pdf.drawInlineImage(file_name, 180, 330, width=250, height=250)
     pdf.save()
 
-
 # DBHandler
 def load_customers(conn, query):
     cursor = conn.cursor()
     cursor.execute(query)
     for row in tqdm(cursor, desc='Generating QR Codes', unit=' customers'):
-        customers = str(row[0])
-        # print(row[0] + row[1] + row[2] + row[3] + row[4])
-        
         customerName = row[0]
         customerCode = row[1]
         connectionNo = row[5]
@@ -89,5 +86,22 @@ def load_customers(conn, query):
         contract_no = str(row[5])
         generate_pdf(customerName, customerCode, connectionNo, meterInfo, contract_no)
 
+@click.command()
+@click.option('--all', 'opt', flag_value='all', default=False, help="Generate Badge for all customers.")
+@click.option('--single', 'opt', flag_value='single', help="Generate only for one person with thier Contract Number.")
+@click.option('--from', 'opt', flag_value='from', help="Generate starting from the last customers badge Contract Number.")
+def opt(opt):
+    if opt=='all':
+        load_customers(conn, SQL_ALL)
+    elif opt=='single':
+        contractNo = input("Customers Contract Number: ")
+        load_customers(conn, SQL_SINGLE+f'{contractNo}')
+    elif opt=='from':
+        contractNo = input("last Generated Contract Number: ")
+        load_customers(conn, SQL_FROM+f'{contractNo} {SQL_ORDER}')
+    else:
+        print('invalid Command: try QRGenerator.py --help')
+
+
 if __name__ == "__main__":
-    load_customers(conn, SQL_ALL)
+    opt()
