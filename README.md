@@ -10,6 +10,14 @@ pip install -r requirements.txt
 ```
 
 ## Usage:
+
+create destination directories:
+
+```
+\cust_pdf
+\cust_qr
+```
+
 Generate Badge for all Customers: 
 ```
 QRGenerator.py --all

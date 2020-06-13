@@ -71,7 +71,7 @@ def generate_pdf(customerName, customerCode, connectionNo, meterInfo, contract_n
     pdf.line(130, 590, 470, 590)
 
     # insert qrcode
-    pdf.drawInlineImage(file_name, 180, 330, width=250, height=250)
+    pdf.drawImage(file_name, 180, 330, width=250, height=250)
     pdf.save()
 
 # DBHandler
