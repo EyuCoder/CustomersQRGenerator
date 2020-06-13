@@ -21,11 +21,15 @@ create destination directories:
 Generate Badge for all Customers: 
 ```
 QRGenerator.py --all
+
+Customers kebele: 1
 ```
 
 Generate Badge for a single Customers: 
 ```
 QRGenerator.py --single
+
+Customers kebele: 1
 
 Customers Contract Number: 0000233
 ```
@@ -34,6 +38,8 @@ Customers Contract Number: 0000233
 Generate Badge starting from last Generator Customers Batch: 
 ```
 QRGenerator.py --from
+
+Customers kebele: 1
 
 last Generated Contract Number: 0034755
 ```
