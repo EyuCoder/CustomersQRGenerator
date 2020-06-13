@@ -9,26 +9,10 @@ from reportlab.lib import colors
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 
-SQL_ALL = '''
-        SELECT top(15) subscriber.name, subscriber.customerCode, subscription.serialNo, (SELECT [name]
-        FROM [Main_2006].[dbo].[TransactionItems] where code=subscription.itemCode), subscription.modelNo, subscription.contractNo
-        FROM subscriber INNER JOIN subscription ON subscriber.id=subscription.subscriberID  
-        where Subscription.ticksTo=-1 order by subscription.contractNo'''
-SQL_SINGLE = '''
-        SELECT DISTINCT subscriber.name, subscriber.customerCode, subscription.serialNo, (SELECT [name]
-        FROM [Main_2006].[dbo].[TransactionItems] where code=subscription.itemCode),subscription.modelNo, subscription.contractNo
-        FROM subscriber INNER JOIN subscription ON subscriber.id=subscription.subscriberID  
-        where Subscription.ticksTo=-1 and  subscription.contractNo='''
-SQL_FROM = '''
-        SELECT top(15) subscriber.name, subscriber.customerCode, subscription.serialNo, (SELECT [name]
-        FROM [Main_2006].[dbo].[TransactionItems] where code=subscription.itemCode), subscription.modelNo, subscription.contractNo
-        FROM subscriber INNER JOIN subscription ON subscriber.id=subscription.subscriberID  
-        where Subscription.ticksTo=-1 and subscription.contractNo>'''
-SQL_ORDER = 'order by subscription.contractNo'
 
 conn = pyodbc.connect(
     "Driver=SQL Server Native Client 11.0;"
-    "Server=SERVER_NAME_HERE;"
+    "Server=KINGSCXR\\SQLSERVER;"
     "Database=Subscriber;"
     "Trusted_Connection=Yes;"
 )
@@ -37,7 +21,6 @@ documentTitle = 'WSIS Water Meter QRCode!'
 
 qr_dir = os.getcwd()+"\\cust_qr"
 pdf_dir = os.getcwd()+"\\cust_pdf"
-
 
 
 def generate_qrcode(contract_no):
@@ -50,7 +33,7 @@ def generate_qrcode(contract_no):
 def generate_pdf(customerName, customerCode, connectionNo, meterInfo, contract_no):
     file_name = generate_qrcode(contract_no)
     pdf_name = f"{pdf_dir}\\qrcode-{contract_no}.pdf"
-    
+
     pdf = canvas.Canvas(pdf_name)
     pdf.setTitle(documentTitle)
 
@@ -75,30 +58,64 @@ def generate_pdf(customerName, customerCode, connectionNo, meterInfo, contract_n
     pdf.save()
 
 # DBHandler
+
+
 def load_customers(conn, query):
     cursor = conn.cursor()
-    cursor.execute(query)
+    try:
+        cursor.execute(query)
+    except pyodbc.Error as e:
+        sqlstate = e.args[1]
+        print(sqlstate)
+
     for row in tqdm(cursor, desc='Generating QR Codes', unit=' customers'):
         customerName = row[0]
         customerCode = row[1]
         connectionNo = row[5]
         meterInfo = [row[2], row[3], row[4]]
         contract_no = str(row[5])
-        generate_pdf(customerName, customerCode, connectionNo, meterInfo, contract_no)
+        generate_pdf(customerName, customerCode,
+                     connectionNo, meterInfo, contract_no)
+    input("Press Enter to exit ...")
+
 
 @click.command()
 @click.option('--all', 'opt', flag_value='all', default=False, help="Generate Badge for all customers.")
 @click.option('--single', 'opt', flag_value='single', help="Generate only for one person with thier Contract Number.")
 @click.option('--from', 'opt', flag_value='from', help="Generate starting from the last customers badge Contract Number.")
 def opt(opt):
-    if opt=='all':
+    if opt == 'all':
+        kebele = input("Customers kebele: ")
+        SQL_ALL = f'''
+            SELECT top(15) subscriber.name, subscriber.customerCode, subscription.serialNo, (SELECT [name]
+            FROM [Main_2006].[dbo].[TransactionItems] where code=subscription.itemCode), subscription.modelNo, subscription.contractNo
+            FROM subscriber INNER JOIN subscription ON subscriber.id=subscription.subscriberID  
+            where Subscription.ticksTo=-1 and subscriber.kebele={kebele} order by subscription.contractNo
+            '''
+
         load_customers(conn, SQL_ALL)
-    elif opt=='single':
+    elif opt == 'single':
+        kebele = input("Customers kebele: ")
         contractNo = input("Customers Contract Number: ")
-        load_customers(conn, SQL_SINGLE+f'{contractNo}')
-    elif opt=='from':
+        SQL_SINGLE = f'''
+            SELECT DISTINCT subscriber.name, subscriber.customerCode, subscription.serialNo, (SELECT [name]
+            FROM [Main_2006].[dbo].[TransactionItems] where code=subscription.itemCode),subscription.modelNo, subscription.contractNo
+            FROM subscriber INNER JOIN subscription ON subscriber.id=subscription.subscriberID  
+            where Subscription.ticksTo=-1 and subscriber.kebele={kebele} and subscription.contractNo='{contractNo}'
+            '''
+
+        load_customers(conn, SQL_SINGLE)
+    elif opt == 'from':
+        kebele = input("Customers kebele: ")
         contractNo = input("last Generated Contract Number: ")
-        load_customers(conn, SQL_FROM+f'{contractNo} {SQL_ORDER}')
+        SQL_FROM = f'''SELECT top(15) subscriber.name, subscriber.customerCode, subscription.serialNo, (SELECT [name]
+            FROM [Main_2006].[dbo].[TransactionItems] where code=subscription.itemCode), subscription.modelNo, subscription.contractNo
+            FROM subscriber INNER JOIN subscription ON subscriber.id=subscription.subscriberID  
+            where Subscription.ticksTo=-1 and
+            subscription.contractNo>{contractNo} and subscriber.kebele={kebele} order by subscription.contractNo
+            '''
+        
+        load_customers(conn, SQL_FROM)  
     else:
         print('invalid Command: try QRGenerator.py --help')
 
