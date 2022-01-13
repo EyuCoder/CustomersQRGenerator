@@ -2,7 +2,7 @@
 
 click==7.1.2
 
-pillow==8.3.2; python_version >= '3.5'
+pillow==9.0.0; python_version >= '3.5'
 
 pyodbc==4.0.30
 
