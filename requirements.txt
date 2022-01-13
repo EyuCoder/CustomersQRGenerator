@@ -10,7 +10,7 @@ pypng==0.0.20
 
 pyqrcode==1.2.1
 
-reportlab==3.5.42
+reportlab==3.5.55
 
 tqdm==4.46.1
 
