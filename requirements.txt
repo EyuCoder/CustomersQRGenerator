@@ -1,4 +1,4 @@
-﻿-i https://pypi.org/simple
+-i https://pypi.org/simple
 
 click==7.1.2
 
@@ -10,7 +10,7 @@ pypng==0.0.20
 
 pyqrcode==1.2.1
 
-reportlab==3.5.42
+reportlab==3.6.13
 
 tqdm==4.46.1
 
