@@ -1,8 +1,8 @@
-﻿-i https://pypi.org/simple
+-i https://pypi.org/simple
 
 click==7.1.2
 
-pillow==9.3.0; python_version >= '3.5'
+pillow==10.0.1; python_version >= '3.5'
 
 pyodbc==4.0.30
 
